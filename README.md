@@ -342,3 +342,9 @@ Built by **Yahya Menkari** as part of a final-year AI and weather forecasting pr
 Full project write-up:
 
 [From Raw Weather Station Data to 24-Hour Forecasts: Building an End-to-End AI Forecasting System](https://medium.com/@yahya.menkari/from-raw-weather-station-data-to-24-hour-forecasts-building-an-end-to-end-ai-forecasting-system-c73472605fa1)
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+
+
