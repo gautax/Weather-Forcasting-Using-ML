@@ -1,0 +1,8 @@
+{
+  "model_name": "Multi-step XGBoost",
+  "target_variable": "Air_Temperature",
+  "forecast_horizon_hours": 24,
+  "n_input_features": 42,
+  "feature_file": "feature_columns.json",
+  "model_file": "multioutput_xgb.pkl"
+}

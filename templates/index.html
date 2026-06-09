@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>24-Hour Weather Forecast</title>
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v='20260610-zoom1') }}" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+  <div class="ambient-bg"></div>
+
+  <main class="app-shell">
+    <section class="hero">
+      <div class="hero-copy">
+        <div class="hero-brand-mark">
+          <img src="{{ url_for('static', filename='assets/weather-ai-icon-v2.png', v='20260610-fix2') }}" alt="3D AI weather forecasting icon" />
+        </div>
+        <p class="eyebrow">AI WEATHER FORECASTING</p>
+        <h1>Forecast the next 24 hours of temperature.</h1>
+        <p class="subtitle">
+          Upload station data, let the trained {{ metadata.model_name }} model forecast the next day,
+          and explore the result through a cleaner operational dashboard.
+        </p>
+
+        <div class="hero-signal-row" aria-label="Forecast highlights">
+          <span><i class="fa-solid fa-wave-square"></i> Live forecast curve</span>
+          <span><i class="fa-solid fa-clock"></i> {{ metadata.forecast_horizon_hours }} hourly points</span>
+          <span><i class="fa-solid fa-temperature-half"></i> {{ metadata.target_variable.replace("_", " ") }}</span>
+        </div>
+
+        <div class="hero-actions">
+          <a href="#forecast-workbench" class="primary-link">
+            Start Forecast
+            <i class="fa-solid fa-arrow-right"></i>
+          </a>
+          <span class="model-pill">
+            <i class="fa-solid fa-circle-check"></i>
+            Model Ready
+          </span>
+        </div>
+      </div>
+
+      <aside class="model-panel">
+        <div class="model-panel-header">
+          <span>Live Model Card</span>
+          <span class="live-dot">Online</span>
+        </div>
+        <div class="model-visual">
+          <img src="{{ url_for('static', filename='assets/weather-ai-icon-v2.png', v='20260610-fix2') }}" alt="3D weather forecasting icon" />
+        </div>
+        <div class="model-stat large">
+          <strong>{{ metadata.forecast_horizon_hours }}h</strong>
+          <span>forecast horizon</span>
+        </div>
+        <div class="model-stat-grid">
+          <div class="model-stat">
+            <strong>{{ metadata.n_input_features }}</strong>
+            <span>features</span>
+          </div>
+          <div class="model-stat">
+            <strong>{{ metadata.target_variable.replace("_", " ") }}</strong>
+            <span>target</span>
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <section id="forecast-workbench" class="workbench">
+      <aside class="input-panel panel">
+        <div class="panel-heading">
+          <p class="eyebrow">INPUT</p>
+          <h2>Build a forecast run</h2>
+          <p>Choose the file type that matches your data, then generate a fresh 24-hour forecast.</p>
+        </div>
+
+        <form id="uploadForm" class="upload-form">
+          <div class="mode-selector" role="radiogroup" aria-label="Input mode">
+            <label class="mode-card active" data-mode="engineered">
+              <input type="radio" name="inputMode" value="engineered" checked />
+              <span class="mode-icon"><i class="fa-solid fa-table-cells-large"></i></span>
+              <span>
+                <strong>Engineered row</strong>
+                <small>One model-ready CSV row with all 42 features.</small>
+              </span>
+            </label>
+
+            <label class="mode-card" data-mode="raw">
+              <input type="radio" name="inputMode" value="raw" />
+              <span class="mode-icon"><i class="fa-solid fa-tower-broadcast"></i></span>
+              <span>
+                <strong>Raw station data</strong>
+                <small>Recent hourly CSV or Excel data prepared automatically.</small>
+              </span>
+            </label>
+          </div>
+
+          <label for="csvFile" class="file-drop" id="fileDrop">
+            <input type="file" id="csvFile" name="file" accept=".csv,.xlsx,.xls" required />
+            <span class="upload-icon"><i class="fa-solid fa-cloud-arrow-up"></i></span>
+            <strong id="fileDropTitle">Drop a file here or browse</strong>
+            <small id="fileHelpText">Try models/sample_input.csv for the first engineered-input test.</small>
+            <span id="fileName" class="file-name hidden"></span>
+          </label>
+
+          <label class="datetime-box" for="forecastStart">
+            <span>
+              <strong>Forecast start datetime</strong>
+              <small>Optional for engineered input. Raw mode uses the latest timestamp in the uploaded file.</small>
+            </span>
+            <input type="datetime-local" id="forecastStart" />
+          </label>
+
+          <button type="submit" class="predict-btn" id="predictBtn">
+            <span>Generate Forecast</span>
+            <i class="fa-solid fa-bolt"></i>
+          </button>
+        </form>
+
+        <div id="messageBox" class="message-box hidden"></div>
+      </aside>
+
+      <section id="resultsSection" class="results-panel panel empty-state">
+        <div id="emptyResults" class="empty-results">
+          <span class="empty-icon"><i class="fa-solid fa-chart-line"></i></span>
+          <h2>Forecast results will appear here.</h2>
+          <p>After prediction, this space becomes an interactive summary with chart, table, and export controls.</p>
+        </div>
+
+        <div id="resultsContent" class="hidden">
+          <div class="results-topline">
+            <div>
+              <p class="eyebrow">RESULTS</p>
+              <h2>Next 24-hour forecast</h2>
+              <p id="forecastContext">Forecast generated from uploaded input.</p>
+              <p id="runMeta" class="run-meta">Waiting for a forecast run.</p>
+            </div>
+            <button id="downloadBtn" class="download-btn">
+              <i class="fa-solid fa-download"></i>
+              Export CSV
+            </button>
+          </div>
+
+          <div class="summary-grid">
+            <article class="metric-card">
+              <span class="metric-label">Lowest</span>
+              <strong id="minTemp">--</strong>
+              <small>&deg;C predicted minimum</small>
+            </article>
+            <article class="metric-card featured">
+              <span class="metric-label">Average</span>
+              <strong id="avgTemp">--</strong>
+              <small>&deg;C next-day mean</small>
+            </article>
+            <article class="metric-card">
+              <span class="metric-label">Highest</span>
+              <strong id="maxTemp">--</strong>
+              <small>&deg;C predicted maximum</small>
+            </article>
+          </div>
+
+          <div class="insight-grid">
+            <div class="insight-card">
+              <span><i class="fa-solid fa-arrow-trend-up"></i> Trend</span>
+              <strong id="trendInsight">--</strong>
+            </div>
+            <div class="insight-card">
+              <span><i class="fa-solid fa-sun"></i> Warmest hour</span>
+              <strong id="warmestInsight">--</strong>
+            </div>
+            <div class="insight-card">
+              <span><i class="fa-solid fa-moon"></i> Coolest hour</span>
+              <strong id="coolestInsight">--</strong>
+            </div>
+          </div>
+
+          <div class="chart-card">
+            <div class="chart-header">
+              <div>
+                <h3>Temperature curve</h3>
+                <p>Hover points to inspect exact hourly predictions.</p>
+              </div>
+              <span id="rangeBadge" class="range-badge">Range -- &deg;C</span>
+            </div>
+            <div class="chart-container">
+              <canvas id="forecastChart"></canvas>
+            </div>
+          </div>
+
+          <div class="timeline-card">
+            <div class="chart-header">
+              <div>
+                <h3>24-hour rhythm</h3>
+                <p>A compact scan of each predicted hour.</p>
+              </div>
+            </div>
+            <div id="hourlyStrip" class="hourly-strip"></div>
+          </div>
+
+          <details class="table-disclosure">
+            <summary>
+              <span><i class="fa-solid fa-table"></i> Forecast table</span>
+              <i class="fa-solid fa-chevron-down"></i>
+            </summary>
+            <div class="table-wrapper">
+              <table id="forecastTable">
+                <thead>
+                  <tr>
+                    <th>Hour Ahead</th>
+                    <th>Forecast Time</th>
+                    <th>Predicted Temp (&deg;C)</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </details>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="{{ url_for('static', filename='js/app.js', v='20260610-fix2') }}"></script>
+</body>
+</html>
